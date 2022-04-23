@@ -1,0 +1,22 @@
+UPDATE 
+
+Check node information
+  wget -q -O aptos_identity.sh https://api.zvalid.com/aptos_identity.sh && chmod +x aptos_identity.sh && sudo /bin/bash aptos_identity.sh
+View key 
+  more ~/aptos/identity/private-key.txt
+View public key and peer
+  more ~/aptos/identity/peer-info.yaml
+
+update node Aptos ( use Docker )
+  wget -q -O aptos.sh https://api.zvalid.com/aptos.sh && chmod +x aptos.sh && sudo /bin/bash aptos.sh
+
+ In case of changing peer and key, change it as follows
+   cd ~/aptos && docker compose down
+   nano ~/aptos/public_full_node.yaml
+   cd ~/aptos && docker compose up -d
+
+ check node 
+   curl 127.0.0.1:9101/metrics 2> /dev/null | grep aptos_state_sync_version | grep type
+   curl 127.0.0.1:9101/metrics 2> /dev/null | grep aptos_connections
+   https://www.nodex.run/aptos_test/
+   http://node-tools.net/aptos/tester/
