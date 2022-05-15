@@ -1,0 +1,114 @@
+Aptos validator node 
+  guide : https://aptos.dev/tutorials/validator-node/run-validator-node-using-docker/
+
+If you have run a devnet full node before, please stop it first to prevent port conflicts from running the testnet validator node
+ $ cd ~/aptos && docker compose down
+ $ apt remove docker docker-compose
+
+1 - install docker , docker-compose , CLI
+
+# Install Docker
+$ wget -O get-docker.sh https://get.docker.com 
+$ sudo sh get-docker.sh
+$ rm -f get-docker.sh
+
+# Install docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Install CLI: 
+
+ $ mkdir bin
+ $ cd ~/bin
+ $ wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v0.1.1/aptos-cli-0.1.1-Ubuntu-x86_64.zip
+ $ apt install unzip
+ $ unzip aptos-cli-0.1.1-Ubuntu-x86_64.zip
+ $ chmod +x ~/bin/aptos
+ $ export PATH="$HOME/bin:$PATH"
+ $ source ~/.bashrc
+
+2 - Create a directory for your Aptos node composition. e.g.
+
+ $ export WORKSPACE=testnet
+ $ mkdir ~/$WORKSPACE
+ $ cd ~/$WORKSPACE
+
+3 - Download the validator.yaml, fullnode.yaml and docker-compose.yaml configuration files into this directory
+
+ $ wget https://raw.githubusercontent.com/aptos-labs/aptos-core/main/docker/compose/aptos-node/docker-compose.yaml
+ $ wget https://raw.githubusercontent.com/aptos-labs/aptos-core/main/docker/compose/aptos-node/validator.yaml
+ $ wget https://raw.githubusercontent.com/aptos-labs/aptos-core/main/docker/compose/aptos-node/fullnode.yaml
+
+4 - Generate key pairs (node owner key, consensus key and networking key) in your working directory.
+
+ $ aptos genesis generate-keys --output-dir ~/$WORKSPACE
+
+5 - Configure validator information, you need to setup a static IP / DNS address which can be used by the node, and make sure the network / firewalls are properly configured to accept external connections.
+ See Network Identity For FullNode for how to do this
+  
+  # for example, with IP:
+
+aptos genesis set-validator-configuration \
+    --keys-dir ~/$WORKSPACE --local-repository-dir ~/$WORKSPACE \
+    --username thonguyen \
+    --validator-host 154.12.229.177:6180 \
+    --full-node-host 154.12.229.177:6182
+
+thonguyen is my node name , 154.12.229.177 is my ip vps . Change your name , ip
+
+6- Create layout YAML file, which defines the node in the validatorSet, for test mode, we can create a genesis blob containing only one node.
+  $ nano layout.yaml
+
+copy the below and paste in the command , replace your name
+
+   ---
+root_key: "0x5243ca72b0766d9e9cbf2debf6153443b01a1e0e6d086c7ea206eaf6f8043956"
+users:
+  - thonguyen
+chain_id: 23
+
+save = ctrl + x -> enter
+
+7 - Download AptosFramework Move bytecodes
+ Download the Aptos Framework from the release page: https://github.com/aptos-labs/aptos-core/releases/tag/aptos-framework-v0.1.0
+ 
+ $ wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-framework-v0.1.0/framework.zip
+unzip framework.zip
+
+8 - Compile genesis blob and waypoint
+
+ $ aptos genesis generate-genesis --local-repository-dir ~/$WORKSPACE --output-dir ~/$WORKSPACE
+
+9- To recap, in your working directory, you should have a list of files:
+
+   1 validator.yaml            validator config file
+   2 fullnode.yaml             fullnode config file
+   3 docker-compose.yaml       docker compose file to run validator and fullnode
+   4 private-keys.yaml         Private keys for owner account, consensus, networking
+   5 validator-identity.yaml   Private keys for setting validator identity
+   6 validator-full-node-identity.yaml    Private keys for setting validator full node identity
+   7 <username>.yaml           Node info for both validator / fullnode
+   8 layout.yaml               layout file to define root key, validator user, and chain ID
+   9 framework                 folder which contains all the move bytecode for AptosFramework.
+   10 waypoint.txt              waypoint for genesis transaction
+   11 genesis.blob              genesis binary contains all the info about framework, validatorSet and more.
+
+10 - Run docker-compose
+
+ $ Docker compose up -d 
+
+11 - Apply for Incentivized Testnet : https://community.aptoslabs.com/
+  You can check the file content for PUBLIC KEYS, VALIDATOR NODE and FULL NODE information.
+ 
+ $ cat <your-node-name>.yaml 
+ 
+ （Example）: cat thonguyen.yaml
+
+
+ok ok 
+
+CHECK NODE : 
+docker logs -f testnet-validator-1  --tail 5000
+docker logs -f testnet-fullnode-1 --tail 5000
+
+
