@@ -95,7 +95,7 @@ unzip framework.zip
 
 10 - Run docker-compose
 
- $ Docker compose up -d 
+ $ docker compose up -d 
 
 11 - Apply for Incentivized Testnet : https://community.aptoslabs.com/
   You can check the file content for PUBLIC KEYS, VALIDATOR NODE and FULL NODE information.
