@@ -1,0 +1,186 @@
+38.242.220.160
+root@vmi911879:~/testnet# cat thonguyen.yaml
+---
+account_address: 8096f1c836e2adcfd2c84b688d5b4f7df1041b17c0dbd8a27e55911a96155727
+consensus_public_key: "0xb89eabd5f7cb77d105e15a8be10be525d99935c782230f40e5a81ad78037c53b"
+account_public_key: "0xff226f32c3e5c628037be365f492a0f5de6f5c1d7906ca3c7a9c09297adbff72"
+validator_network_public_key: "0x7575bf4132432105aa5ab59af6753712d758c6d367972c4c0feb24e9fcd96e67"
+validator_host:
+  host: 38.242.220.160
+  port: 6180
+full_node_network_public_key: "0x0adfe467be7d8b7a126b7b50425e05f2e27caa3f3b91cb4019d335780ed1871e"
+full_node_host:
+  host: 38.242.220.160
+  port: 6182
+stake_amount: 1
+
+161.97.149.123 
+
+
+
+
+
+
+Aptos validator R2 guide : https://aptos.dev/nodes/validator-node/run-validator-node-using-docker/
+
+If you have run a devnet full node before, please stop it first to prevent port conflicts from running the testnet validator node
+(Nếu bạn đã chạy một nút đầy đủ của devnet trước đó, vui lòng dừng nó trước để tránh xung đột cổng chạy nút trình xác thực testnet)
+
+ $ cd ~/aptos && docker compose down
+ $ apt remove docker docker-compose
+
+1 - install docker , docker-compose , Aptos CLI 0.2.0.
+
+# Install Docker
+$ wget -O get-docker.sh https://get.docker.com 
+$ sudo sh get-docker.sh
+$ rm -f get-docker.sh
+
+# Install docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Install Aptos CLI 0.2.0.: 
+
+mkdir bin
+cd ~/bin
+wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-0.2.0/aptos-cli-0.2.0-Ubuntu-x86_64.zip
+apt install unzip
+unzip aptos-cli-0.2.0-Ubuntu-x86_64.zip
+chmod +x ~/bin/aptos
+export PATH="$HOME/bin:$PATH"
+source ~/.bashrc
+
+2 - Create a directory for your Aptos node composition. ( Tạo một thư mục cho thành phần nút Aptos )
+
+ $ export WORKSPACE=testnet
+ $ mkdir ~/$WORKSPACE
+ $ cd ~/$WORKSPACE
+
+3 - Download the validator.yaml and docker-compose.yaml configuration files into this directory
+    Tải xuống các tệp cấu hình validator.yaml và docker-compos.yaml vào thư mục này.
+
+wget https://raw.githubusercontent.com/aptos-labs/aptos-core/main/docker/compose/aptos-node/docker-compose.yaml
+wget https://raw.githubusercontent.com/aptos-labs/aptos-core/main/docker/compose/aptos-node/validator.yaml
+
+4 - Generate key pairs (node owner key, consensus key and networking key) in your working directory
+    Tạo các cặp khóa (khóa chủ sở hữu nút, khóa đồng thuận và khóa mạng) trong thư mục làm việc của bạn.
+   
+ $ aptos genesis generate-keys --output-dir ~/$WORKSPACE
+
+   thao tác này sẽ tạo 3 tệp : private-keys.yaml, validator-identity.yaml, validator-full-node-identity.yaml 
+   hãy Backup key files
+
+5 - Configure validator information, you need to setup a static IP / DNS address which can be used by the node, and make sure the network / firewalls are properly configured to accept external connections.
+ See Network Identity For FullNode for how to do this
+  Định cấu hình thông tin trình xác thực. Bạn cần thiết lập địa chỉ IP / DNS tĩnh mà nút có thể sử dụng và đảm bảo rằng mạng / tường lửa được định cấu hình đúng để chấp nhận các kết nối bên ngoài
+  Bạn sẽ cần thông tin này để đăng ký trên trang Aptos community website sau này
+
+  # for example, with IP:
+
+aptos genesis set-validator-configuration \
+    --keys-dir ~/$WORKSPACE --local-repository-dir ~/$WORKSPACE \
+    --username tunguyen \
+    --validator-host 161.97.149.123:6180 \
+    --full-node-host 161.97.149.123:6182
+
+thonguyen is my node name , 154.12.229.177 is my ip vps . Change your name , ip
+
+Thao tác này sẽ tạo tệp YAML trong thư mục làm việc của bạn với tên người dùng của bạn, ví dụ thonguyen.yaml . Nó sẽ giống như dưới đây:
+
+---
+account_address: 7410973313fd0b5c69560fd8cd9c4aaeef873f869d292d1bb94b1872e737d64f
+consensus_public_key: "0x4e6323a4692866d54316f3b08493f161746fda4daaacb6f0a04ec36b6160fdce"
+account_public_key: "0x83f090aee4525052f3b504805c2a0b1d37553d611129289ede2fc9ca5f6aed3c"
+validator_network_public_key: "0xa06381a17b090b8db5ffef97c6e861baad94a1b0e3210e6309de84c15337811d"
+validator_host:
+  host: 35.232.235.205
+  port: 6180
+full_node_network_public_key: "0xd66c403cae9f2939ade811e2f582ce8ad24122f0d961aa76be032ada68124f19"
+full_node_host:
+  host: 35.232.235.206
+  port: 6182
+stake_amount: 1
+
+6- Create layout YAML file, which defines the node in the validatorSet, for test mode, we can create a genesis blob containing only one node.
+   Tạo tệp YAML bố cục, định nghĩa nút trong validatorSet, đối với chế độ thử nghiệm, chúng ta có thể tạo một blob genesis chỉ chứa một nút.
+
+  $ vi layout.yaml
+
+copy the below and paste in the command , replace your name
+
+---
+root_key: "F22409A93D1CD12D2FC92B5F8EB84CDCD24C348E32B3E7A720F3D2E288E63394"
+users:
+  - "tunguyen"
+chain_id: 40
+min_stake: 0
+max_stake: 100000
+min_lockup_duration_secs: 0
+max_lockup_duration_secs: 2592000
+epoch_duration_secs: 86400
+initial_lockup_timestamp: 1656615600
+min_price_per_gas_unit: 1
+allow_new_validators: true
+
+save = :wq --> enter
+
+7 - Download AptosFramework Move bytecodes
+ Tải xuống AptosFramework Move bytecode.
+
+Tải xuống Khung Aptos từ trang phát hành: https://github.com/aptos-labs/aptos-core/releases/tag/aptos-framework-v0.2.0
+ 
+$wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-framework-v0.2.0/framework.zip
+unzip framework.zip
+
+Bây giờ bạn sẽ có một thư mục được gọi frameworktrong thư mục ~ / $ WORKSPACE và thư mục này chứa các tệp Move bytecode có định dạng .mv
+
+8 - Compile genesis blob and waypoint ( Biên dịch genesis blob và điểm tham chiếu )
+
+ $ aptos genesis generate-genesis --local-repository-dir ~/$WORKSPACE --output-dir ~/$WORKSPACE
+
+Thao tác này sẽ tạo hai tệp trong thư mục làm việc của bạn genesis.blobvà waypoint.txt
+
+*** Tóm lại, trong thư mục làm việc của bạn, bạn nên có một danh sách các tệp:
+
+   1 validator.yaml            validator config file
+   2 docker-compose.yaml       docker compose file to run validator and fullnode
+   3 private-keys.yaml         Private keys for owner account, consensus, networking
+   4 validator-identity.yaml   Private keys for setting validator identity
+   5 validator-full-node-identity.yaml    Private keys for setting validator full node identity
+   6 <username>.yaml           Node info for both validator / fullnode
+   7 layout.yaml               layout file to define root key, validator user, and chain ID
+   8 framework                 folder which contains all the move bytecode for AptosFramework.
+   9 waypoint.txt              waypoint for genesis transaction
+   10 genesis.blob              genesis binary contains all the info about framework, validatorSet and more.
+
+validator.yaml         tệp cấu hình trình xác nhận
+docker-compose.yaml    docker soạn tệp để chạy trình xác thực và fullnode
+private-keys.yaml       Khóa riêng tư cho tài khoản chủ sở hữu, sự đồng thuận, mạng
+validator-identity.yaml Khóa cá nhân để thiết lập danh tính trình xác thực
+validator-full-node-identity.yaml   Khóa cá nhân để thiết lập danh tính nút đầy đủ của trình xác thực
+<username>.yaml       Thông tin nút cho cả trình xác thực / fullnode
+layout.yaml           tệp bố cục để xác định khóa gốc, người dùng trình xác thực và ID chuỗi
+framework             thư mục chứa tất cả bytecode di chuyển cho AptosFramework.
+waypoint.txt          điểm tham chiếu cho giao dịch khởi đầu
+genesis.blobgenesis   binary chứa tất cả thông tin về framework, validatorSet và hơn thế nữa.
+
+10 - Run docker-compose
+
+ $ docker compose up -d 
+
+11 - Apply for Incentivized Testnet : https://community.aptoslabs.com/
+  You can check the file content for PUBLIC KEYS, VALIDATOR NODE and FULL NODE information.
+ 
+ $ cat <your-node-name>.yaml 
+ 
+ （Example）: cat thonguyen.yaml
+
+
+ok ok 
+STOP : cd ~/testnet
+       docker compose down
+CHECK NODE : 
+docker logs -f testnet-validator-1  --tail 5000
+docker logs -f testnet-fullnode-1 --tail 5000
+
