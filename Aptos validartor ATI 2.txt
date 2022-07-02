@@ -1,26 +1,3 @@
-38.242.220.160
-root@vmi911879:~/testnet# cat thonguyen.yaml
----
-account_address: 8096f1c836e2adcfd2c84b688d5b4f7df1041b17c0dbd8a27e55911a96155727
-consensus_public_key: "0xb89eabd5f7cb77d105e15a8be10be525d99935c782230f40e5a81ad78037c53b"
-account_public_key: "0xff226f32c3e5c628037be365f492a0f5de6f5c1d7906ca3c7a9c09297adbff72"
-validator_network_public_key: "0x7575bf4132432105aa5ab59af6753712d758c6d367972c4c0feb24e9fcd96e67"
-validator_host:
-  host: 38.242.220.160
-  port: 6180
-full_node_network_public_key: "0x0adfe467be7d8b7a126b7b50425e05f2e27caa3f3b91cb4019d335780ed1871e"
-full_node_host:
-  host: 38.242.220.160
-  port: 6182
-stake_amount: 1
-
-161.97.149.123 
-
-
-
-
-
-
 Aptos validator R2 guide : https://aptos.dev/nodes/validator-node/run-validator-node-using-docker/
 
 If you have run a devnet full node before, please stop it first to prevent port conflicts from running the testnet validator node
@@ -35,6 +12,7 @@ If you have run a devnet full node before, please stop it first to prevent port 
 $ wget -O get-docker.sh https://get.docker.com 
 $ sudo sh get-docker.sh
 $ rm -f get-docker.sh
+check : $docker --version
 
 # Install docker-compose
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -84,7 +62,7 @@ aptos genesis set-validator-configuration \
     --validator-host 161.97.149.123:6180 \
     --full-node-host 161.97.149.123:6182
 
-thonguyen is my node name , 154.12.229.177 is my ip vps . Change your name , ip
+thonguyen is my node name ,161.97.149.123 is my ip vps . Change your name , ip
 
 Thao tác này sẽ tạo tệp YAML trong thư mục làm việc của bạn với tên người dùng của bạn, ví dụ thonguyen.yaml . Nó sẽ giống như dưới đây:
 
@@ -108,11 +86,12 @@ stake_amount: 1
   $ vi layout.yaml
 
 copy the below and paste in the command , replace your name
+copy toàn bộ phần dưới đây pase vào .hãy thay thonguyen thành tên của bạn
 
 ---
 root_key: "F22409A93D1CD12D2FC92B5F8EB84CDCD24C348E32B3E7A720F3D2E288E63394"
 users:
-  - "tunguyen"
+  - "thonguyen"
 chain_id: 40
 min_stake: 0
 max_stake: 100000
@@ -131,7 +110,7 @@ save = :wq --> enter
 Tải xuống Khung Aptos từ trang phát hành: https://github.com/aptos-labs/aptos-core/releases/tag/aptos-framework-v0.2.0
  
 $wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-framework-v0.2.0/framework.zip
-unzip framework.zip
+$unzip framework.zip
 
 Bây giờ bạn sẽ có một thư mục được gọi frameworktrong thư mục ~ / $ WORKSPACE và thư mục này chứa các tệp Move bytecode có định dạng .mv
 
@@ -154,23 +133,12 @@ Thao tác này sẽ tạo hai tệp trong thư mục làm việc của bạn gen
    9 waypoint.txt              waypoint for genesis transaction
    10 genesis.blob              genesis binary contains all the info about framework, validatorSet and more.
 
-validator.yaml         tệp cấu hình trình xác nhận
-docker-compose.yaml    docker soạn tệp để chạy trình xác thực và fullnode
-private-keys.yaml       Khóa riêng tư cho tài khoản chủ sở hữu, sự đồng thuận, mạng
-validator-identity.yaml Khóa cá nhân để thiết lập danh tính trình xác thực
-validator-full-node-identity.yaml   Khóa cá nhân để thiết lập danh tính nút đầy đủ của trình xác thực
-<username>.yaml       Thông tin nút cho cả trình xác thực / fullnode
-layout.yaml           tệp bố cục để xác định khóa gốc, người dùng trình xác thực và ID chuỗi
-framework             thư mục chứa tất cả bytecode di chuyển cho AptosFramework.
-waypoint.txt          điểm tham chiếu cho giao dịch khởi đầu
-genesis.blobgenesis   binary chứa tất cả thông tin về framework, validatorSet và hơn thế nữa.
-
 10 - Run docker-compose
 
  $ docker compose up -d 
 
 11 - Apply for Incentivized Testnet : https://community.aptoslabs.com/
-  You can check the file content for PUBLIC KEYS, VALIDATOR NODE and FULL NODE information.
+ chạy lệnh sau để lấy thông tin điền form
  
  $ cat <your-node-name>.yaml 
  
@@ -182,5 +150,4 @@ STOP : cd ~/testnet
        docker compose down
 CHECK NODE : 
 docker logs -f testnet-validator-1  --tail 5000
-docker logs -f testnet-fullnode-1 --tail 5000
 
