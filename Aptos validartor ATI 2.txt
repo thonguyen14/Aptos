@@ -62,7 +62,7 @@ aptos genesis set-validator-configuration \
     --validator-host 161.97.149.123:6180 \
     --full-node-host 161.97.149.123:6182
 
-thonguyen is my node name ,161.97.149.123 is my ip vps . Change your name , ip
+tunguyen is my node name ,161.97.149.123 is my ip vps . Change your name , ip
 
 Thao tác này sẽ tạo tệp YAML trong thư mục làm việc của bạn với tên người dùng của bạn, ví dụ thonguyen.yaml . Nó sẽ giống như dưới đây:
 
