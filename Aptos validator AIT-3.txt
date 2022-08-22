@@ -1,0 +1,147 @@
+
+pet kitten income fly neutral shop useful music turtle script load swallow
+Aptos- AIT-3
+https://aptoslabs.medium.com/welcome-to-aptos-incentivized-testnet-3-9d7ce888205c
+
+Trước tiên cần cài đặt ví Petra , đọc ở đây https://aptos.dev/nodes/ait/whats-new-in-ait3
+sau đó chạy node
+
+1 - install docker , docker-compose , Aptos CLI v0.3.1
+
+# Install Docker
+$ wget -O get-docker.sh https://get.docker.com 
+$ sudo sh get-docker.sh
+$ rm -f get-docker.sh
+
+# Install docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/download/2.5.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Install Aptos CLI v0.3.1: 
+
+mkdir bin
+cd ~/bin
+wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v0.3.1/aptos-cli-0.3.1-Ubuntu-x86_64.zip
+apt install unzip
+unzip aptos-cli-0.3.1-Ubuntu-x86_64.zip
+chmod +x ~/bin/aptos
+export PATH="$HOME/bin:$PATH"
+source ~/.bashrc
+
+2- Tạo một thư mục cho thành phần nút Aptos 
+
+export WORKSPACE=testnet
+export USERNAME=thonguyen
+mkdir ~/$WORKSPACE
+cd ~/$WORKSPACE
+
+3- Tải xuống các tệp cấu hình validator.yaml và docker-compos.yaml vào thư mục này.
+
+wget https://raw.githubusercontent.com/aptos-labs/aptos-core/main/docker/compose/aptos-node/docker-compose.yaml
+wget https://raw.githubusercontent.com/aptos-labs/aptos-core/main/docker/compose/aptos-node/validator.yaml
+
+4- tạo các cặp khóa (node owner, voter, operator key, consensus key and networking key) in your working directory.
+
+aptos genesis generate-keys --output-dir ~/$WORKSPACE/keys
+
+thao tác này sẽ tạo ra 4 tệp public-keys.yaml ,private-keys.yaml ,validator-identity.yaml, and validator-full-node-identity.yaml trong thư mục /$WORKSPACE/keys
+
+5 - Configure validator information, you need to setup a static IP / DNS address which can be used by the node, and make sure the network / firewalls are properly configured to accept external connections.
+ See Network Identity For FullNode for how to do this
+  Định cấu hình thông tin trình xác thực. Bạn cần thiết lập địa chỉ IP / DNS tĩnh mà nút có thể sử dụng và đảm bảo rằng mạng / tường lửa được định cấu hình đúng để chấp nhận các kết nối bên ngoài
+  Bạn sẽ cần thông tin này để đăng ký trên trang Aptos community website sau này
+
+  # for example, with IP:
+
+
+aptos genesis set-validator-configuration \
+    --local-repository-dir ~/$WORKSPACE \
+    --username thonguyen \
+    --owner-public-identity-file ~/$WORKSPACE/keys/public-keys.yaml \
+    --validator-host 138.201.139.207:6180 \
+    --full-node-host 138.201.139.207:6182 \
+    --stake-amount 100000000000000
+
+thonguyen is my node name , 138.201.139.207 is my ip vps . Change your name , ip
+
+thao tác này sẽ tạo ra 2 tệp  owner.yamlvà operator.yaml trong ~/$WORKSPACE/$USERNAME
+
+ 6. Tạo tệp mẫu bố cục, tệp này xác định nút trong Aptos validatorSet
+
+aptos genesis generate-layout-template --output-file ~/$WORKSPACE/layout.yaml
+
+**Edit the layout.yaml, add the root_key, the Validator node username, and chain_id:
+
+root_key: "D04470F43AB6AEAA4EB616B72128881EEF77346F2075FFE68E14BA7DEBD8095E"
+users: ["<username you specified from previous step>"]
+chain_id: 43
+allow_new_validators: false
+epoch_duration_secs: 7200
+is_test: true
+min_stake: 100000000000000
+min_voting_threshold: 100000000000000
+max_stake: 100000000000000000
+recurring_lockup_duration_secs: 86400
+required_proposer_stake: 100000000000000
+rewards_apy_percentage: 10
+voting_duration_secs: 43200
+voting_power_increase_limit: 20
+
+7 - Tải xuống gói AptosFramework Move vào thư mục ~/$WORKSPACEdưới dạngframework.mrb
+
+wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-framework-v0.3.0/framework.mrb -P ~/$WORKSPACE
+
+8-Compile genesis blob and waypoint Biên dịch genesis blob và điểm tham chiếu
+
+aptos genesis generate-genesis --local-repository-dir ~/$WORKSPACE --output-dir ~/$WORKSPACE
+
+Thao tác này sẽ tạo hai tệp trong thư mục làm việc của bạn genesis.blobvà waypoint.txt
+
+** node phải bao gồm các forder sau
+
+1.docker-compose.yaml   docker compose file to run validator and fullnode
+
+        keys folder which includes:
+
+2.public-keys.yaml:     Public keys for the owner account, consensus, networking (from step 4).
+
+3.private-keys.yaml:    Private keys for the owner account, consensus, networking (from step 4).
+
+4.validator-identity.yaml: Private keys for setting the Validator identity (from step 4).
+
+5.validator-full-node-identity.yaml: Private keys for setting validator full node identity (from step 4).
+
+        username folder, which includes:
+
+6.owner.yaml: define owner, operator, and voter mapping. They are all the same account in test mode (from step 5).
+
+7.operator.yaml: Node information that will be used for both the Validator and the FullNode (from step 5).
+
+8.layout.yaml: The layout file containing the key values for root key, validator user, and chain ID (from step 6).
+
+9.framework.mrb: The AptosFramework Move package (from step 7).
+
+10.waypoint.txt: The waypoint for the genesis transaction (from step 8).
+
+11.genesis.blob The genesis binary that contains all the information about the framework, validatorSet and more (from step 8).
+
+9 -  Run docker-compose
+
+ $ docker compose up -d
+
+check node status:
+curl -s http://`curl -s ifconfig.me`:8080/v1 | jq
+curl 127.0.0.1:9101/metrics 2> /dev/null | grep "aptos_state_sync_version"
+https://ait.aptos-node.info/
+
+fix lỗi :
+Network aptos-docker-compose-shared  Error                                                                                           0.0
+failed to create network aptos-docker-compose-shared: Error response from daemon: Pool overlaps with other one on this address space
+
+ sửa file: docker-compose-fullnode.yaml
+đổi 172.16.1.0/24 => 174.16.1.0/24
+
+xong chạy lại $ docker compose up -d
+
+*try switch to v1 (click on label none in address input field. value must switch from none to v1, next v0, and return to none) 
+
